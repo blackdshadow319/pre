@@ -1,0 +1,226 @@
+<meta charset="utf-8">
+<title>멍멍 분석기 🐶 | 강아지 짖음 소리 분석</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1226; --card:#1a1f3a; --card2:#232a4d;
+    --text:#f2f4ff; --muted:#9aa3c7; --accent:#ffb454; --accent2:#7c7bff;
+    --good:#4ade80; --warn:#fb7185; --line:#2c3560;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#26305f 0%,var(--bg) 55%);
+    color:var(--text); min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:720px; margin:0 auto}
+  h1{font-size:28px; margin:8px 0 4px; text-align:center}
+  .sub{color:var(--muted); text-align:center; margin:0 0 20px; font-size:14px; line-height:1.6}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .btn{
+    display:block; width:100%; border:0; cursor:pointer; font-size:18px; font-weight:700;
+    padding:16px; border-radius:14px; color:#20122a; background:linear-gradient(135deg,var(--accent),#ff8f6b);
+    transition:transform .08s ease, filter .2s;
+  }
+  .btn:hover{filter:brightness(1.05)} .btn:active{transform:scale(.98)}
+  .btn.stop{background:linear-gradient(135deg,#fb7185,#f43f5e); color:#fff}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  canvas{width:100%; height:130px; display:block; background:#12152e; border-radius:12px}
+  .meters{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px}
+  .meter{background:var(--card2); border-radius:12px; padding:12px; text-align:center}
+  .meter .v{font-size:22px; font-weight:800; color:var(--accent)}
+  .meter .l{font-size:12px; color:var(--muted); margin-top:2px}
+  .status{text-align:center; color:var(--muted); font-size:14px; min-height:20px; margin-top:10px}
+  .listening{color:var(--good); font-weight:700}
+  .result{background:linear-gradient(135deg,#232a4d,#2c2158); border-radius:16px; padding:22px; text-align:center; display:none}
+  .result.show{display:block; animation:pop .3s ease}
+  @keyframes pop{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+  .emoji{font-size:56px} .verdict{font-size:22px; font-weight:800; margin:8px 0}
+  .desc{color:var(--muted); font-size:14px; line-height:1.7}
+  .conf{font-size:12px; color:var(--muted); margin-top:12px}
+  .barrow{display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; color:var(--muted)}
+  .barbg{flex:1; height:8px; background:#12152e; border-radius:99px; overflow:hidden}
+  .barfill{height:100%; background:var(--accent2); width:0%; transition:width .3s}
+  .note{font-size:12px; color:var(--muted); line-height:1.7; margin-top:4px}
+  a{color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <h1>🐶 멍멍 분석기</h1>
+  <p class="sub">마이크로 강아지 짖는 소리를 듣고<br>음높이·음량·길이·반복 패턴을 분석해 짖음 유형을 추정해요.</p>
+
+  <div class="card">
+    <button id="toggle" class="btn">🎙️ 분석 시작하기</button>
+    <div id="status" class="status">버튼을 누르면 마이크 권한을 요청해요.</div>
+  </div>
+
+  <div class="card">
+    <canvas id="viz" width="700" height="130"></canvas>
+    <div class="meters">
+      <div class="meter"><div class="v" id="mPitch">–</div><div class="l">음높이 (Hz)</div></div>
+      <div class="meter"><div class="v" id="mVol">–</div><div class="l">음량</div></div>
+      <div class="meter"><div class="v" id="mDur">–</div><div class="l">지속 (초)</div></div>
+    </div>
+  </div>
+
+  <div id="result" class="result">
+    <div class="emoji" id="rEmoji">🐕</div>
+    <div class="verdict" id="rVerdict"></div>
+    <div class="desc" id="rDesc"></div>
+    <div class="barrow"><span>확신도</span><div class="barbg"><div class="barfill" id="rBar"></div></div><span id="rConf"></span></div>
+    <div class="conf">※ 재미로 봐주세요! 실제 강아지 감정과 다를 수 있어요.</div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>어떻게 동작하나요?</b><br>
+      • <b>높은 음높이</b> → 흥분·반가움·경계<br>
+      • <b>낮고 굵은 음</b> → 경고·위협<br>
+      • <b>짧고 반복되는 소리</b> → 놀자! / 관심 끌기<br>
+      • <b>길게 이어지는 소리(하울링)</b> → 외로움·불안<br><br>
+      배포: 이 <b>HTML 파일 하나</b>만 있으면 됩니다. 단, 마이크는 보안상
+      <b>https 주소</b> 또는 <b>localhost</b>에서만 켜져요.
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const toggle=$("toggle"), statusEl=$("status");
+const canvas=$("viz"), ctx=canvas.getContext("2d");
+let audioCtx, analyser, source, stream, raf, running=false;
+
+// 짖음 이벤트 추적용 상태
+let barkStart=0, inBark=false, peakVol=0, pitchSum=0, pitchCnt=0;
+let recentBarks=[]; // 최근 짖음 타임스탬프(반복 감지)
+
+const SILENCE=0.02;      // 무음 임계값 (RMS)
+const BARK_ON=0.06;      // 짖음 시작 임계값
+const MIN_DUR=0.08;      // 최소 지속시간(노이즈 제거)
+
+toggle.onclick=async()=>{ running ? stop() : start(); };
+
+async function start(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){
+    statusEl.textContent="마이크 권한이 필요해요. 브라우저 설정에서 허용해 주세요.";
+    return;
+  }
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  source=audioCtx.createMediaStreamSource(stream);
+  analyser=audioCtx.createAnalyser();
+  analyser.fftSize=2048; analyser.smoothingTimeConstant=0.6;
+  source.connect(analyser);
+  running=true;
+  toggle.textContent="⏹ 분석 멈추기"; toggle.classList.add("stop");
+  statusEl.innerHTML='<span class="listening">● 듣는 중…  강아지를 짖게 해보세요!</span>';
+  loop();
+}
+
+function stop(){
+  running=false; cancelAnimationFrame(raf);
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(audioCtx) audioCtx.close();
+  toggle.textContent="🎙️ 분석 시작하기"; toggle.classList.remove("stop");
+  statusEl.textContent="멈췄어요. 다시 시작하려면 버튼을 누르세요.";
+}
+
+const timeBuf=new Float32Array(2048);
+const freqBuf=new Uint8Array(1024);
+
+function loop(){
+  raf=requestAnimationFrame(loop);
+  analyser.getFloatTimeDomainData(timeBuf);
+  analyser.getByteFrequencyData(freqBuf);
+
+  // RMS(음량) 계산
+  let sum=0; for(let i=0;i<timeBuf.length;i++) sum+=timeBuf[i]*timeBuf[i];
+  const rms=Math.sqrt(sum/timeBuf.length);
+
+  drawViz(rms);
+  $("mVol").textContent=Math.round(rms*400);
+
+  const now=audioCtx.currentTime;
+
+  if(rms>BARK_ON){
+    if(!inBark){ inBark=true; barkStart=now; peakVol=0; pitchSum=0; pitchCnt=0; }
+    peakVol=Math.max(peakVol,rms);
+    const p=detectPitch();
+    if(p>150 && p<2500){ pitchSum+=p; pitchCnt++; $("mPitch").textContent=Math.round(p); }
+    $("mDur").textContent=(now-barkStart).toFixed(2);
+  } else if(rms<SILENCE && inBark){
+    const dur=now-barkStart;
+    inBark=false;
+    if(dur>=MIN_DUR && pitchCnt>0){
+      const avgPitch=pitchSum/pitchCnt;
+      recentBarks.push(now);
+      recentBarks=recentBarks.filter(t=>now-t<3); // 최근 3초
+      classify(avgPitch, peakVol, dur, recentBarks.length);
+    }
+  }
+}
+
+// 자기상관(autocorrelation) 기반 기본주파수 추정
+function detectPitch(){
+  const buf=timeBuf, size=buf.length, sr=audioCtx.sampleRate;
+  let best=-1, bestCorr=0, found=false;
+  const MINP=Math.floor(sr/2500), MAXP=Math.floor(sr/150);
+  let lastCorr=1;
+  for(let off=MINP; off<=MAXP; off++){
+    let corr=0;
+    for(let i=0;i<size-off;i++) corr+=buf[i]*buf[i+off];
+    corr/= (size-off);
+    if(corr>0.5 && corr>lastCorr){ found=true; if(corr>bestCorr){bestCorr=corr; best=off;} }
+    else if(found){ break; }
+    lastCorr=corr;
+  }
+  return best>0 ? sr/best : -1;
+}
+
+function classify(pitch, vol, dur, repeats){
+  let emoji,verdict,desc,conf;
+  if(dur>0.9){
+    emoji="🌙"; verdict="외롭고 불안해요 (하울링/낑낑)";
+    desc="길게 이어지는 소리예요. 혼자 있어서 심심하거나 불안할 수 있어요. 곁에 있어주면 좋아해요.";
+    conf=72;
+  } else if(repeats>=3 && dur<0.35){
+    emoji="🎾"; verdict="놀자! / 관심 좀 주세요";
+    desc="짧은 소리를 빠르게 반복하고 있어요. 신나서 놀아달라거나 뭔가 요구하는 신호일 가능성이 높아요.";
+    conf=68;
+  } else if(pitch>750){
+    emoji="😃"; verdict="반가움·흥분";
+    desc="음높이가 높아요. 반가운 사람을 보거나 신나는 상황일 때 나오는 톤이에요.";
+    conf=64;
+  } else if(pitch<350 && vol>0.15){
+    emoji="⚠️"; verdict="경고·위협";
+    desc="낮고 굵은 소리예요. 낯선 대상을 경계하거나 '오지 마!'라고 말하는 중일 수 있어요.";
+    conf=70;
+  } else {
+    emoji="🐕"; verdict="일반 경계 짖음";
+    desc="주변의 소리나 움직임에 반응하는 평범한 짖음으로 보여요.";
+    conf=55;
+  }
+  const r=$("result");
+  $("rEmoji").textContent=emoji;
+  $("rVerdict").textContent=verdict;
+  $("rDesc").textContent=desc;
+  $("rConf").textContent=conf+"%";
+  $("rBar").style.width=conf+"%";
+  r.classList.add("show");
+}
+
+function drawViz(rms){
+  const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  // 파형
+  ctx.lineWidth=2; ctx.strokeStyle=rms>BARK_ON?"#ffb454":"#7c7bff";
+  ctx.beginPath();
+  for(let i=0;i<w;i++){
+    const idx=Math.floor(i/w*timeBuf.length);
+    const y=h/2 + timeBuf[idx]*h*0.9;
+    i===0?ctx.moveTo(i,y):ctx.lineTo(i,y);
+  }
+  ctx.stroke();
+}
+</script>
