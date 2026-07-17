@@ -1,0 +1,343 @@
+<meta charset="utf-8">
+<title>멍멍 분석기 — 발표 슬라이드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1226; --card:#1a1f3a; --card2:#232a4d;
+    --text:#f2f4ff; --muted:#9aa3c7; --accent:#ffb454; --accent2:#7c7bff;
+    --good:#4ade80; --warn:#fb7185; --line:#2c3560;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    background:var(--bg); color:var(--text); overflow:hidden; height:100vh;
+  }
+  .deck{position:relative; width:100vw; height:100vh}
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; justify-content:center;
+    padding:6vh 8vw; opacity:0; transition:opacity .35s ease;
+    background:radial-gradient(1400px 700px at 50% -20%,#26305f 0%,var(--bg) 60%);
+  }
+  .slide.active{display:flex; opacity:1}
+  .slide.active > *{animation:rise .45s ease backwards}
+  .slide.active > *:nth-child(2){animation-delay:.06s}
+  .slide.active > *:nth-child(3){animation-delay:.12s}
+  .slide.active > *:nth-child(4){animation-delay:.18s}
+  .slide.active > *:nth-child(5){animation-delay:.24s}
+  @keyframes rise{from{opacity:0; transform:translateY(14px)}to{opacity:1; transform:none}}
+
+  .kicker{color:var(--accent); font-weight:800; font-size:clamp(12px,1.4vw,15px); letter-spacing:.12em; margin-bottom:14px}
+  h1{font-size:clamp(34px,6.5vw,76px); line-height:1.1; letter-spacing:-.02em}
+  h2{font-size:clamp(26px,4vw,46px); line-height:1.2; margin-bottom:24px; letter-spacing:-.01em}
+  p.lead{font-size:clamp(15px,1.9vw,23px); color:var(--muted); line-height:1.7; max-width:60ch}
+  .big{font-size:clamp(28px,4.4vw,52px); font-weight:800; line-height:1.35}
+
+  .grid{display:grid; gap:16px; margin-top:8px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .box{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px}
+  .box h3{font-size:clamp(15px,1.8vw,21px); margin-bottom:8px}
+  .box p{font-size:clamp(12px,1.4vw,16px); color:var(--muted); line-height:1.65}
+  .box .ico{font-size:30px; margin-bottom:8px}
+
+  ul.pts{list-style:none; margin-top:6px}
+  ul.pts li{
+    font-size:clamp(15px,2vw,24px); line-height:1.6; padding:12px 0 12px 34px;
+    position:relative; border-bottom:1px solid var(--line);
+  }
+  ul.pts li:before{content:"▸"; position:absolute; left:6px; color:var(--accent)}
+  ul.pts li b{color:var(--accent)}
+
+  .pill{display:inline-block; background:var(--card2); border:1px solid var(--line);
+    border-radius:99px; padding:8px 16px; font-size:clamp(12px,1.4vw,15px); margin:4px 6px 4px 0; color:var(--muted)}
+  .pill b{color:var(--text)}
+
+  code{background:#12152e; border:1px solid var(--line); border-radius:6px; padding:2px 7px;
+    font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.88em; color:var(--accent)}
+  pre{background:#12152e; border:1px solid var(--line); border-radius:12px; padding:18px;
+    overflow:auto; font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:clamp(11px,1.25vw,15px); line-height:1.7; color:#cdd6ff; margin-top:8px}
+  pre .c{color:#6b76a8} pre .k{color:#ff9ec4} pre .n{color:var(--accent)}
+
+  .warnbox{background:linear-gradient(135deg,#3b1d33,#2a1b3f); border:1px solid #6d3d5e;
+    border-radius:16px; padding:24px; margin-top:6px}
+  .warnbox h3{color:var(--warn); font-size:clamp(16px,2vw,24px); margin-bottom:10px}
+  .warnbox p{color:#e6c9d8; font-size:clamp(13px,1.6vw,19px); line-height:1.7}
+
+  .flow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px}
+  .step{flex:1; min-width:110px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:16px 12px; text-align:center}
+  .step .ico{font-size:26px} .step .t{font-size:clamp(11px,1.3vw,15px); font-weight:700; margin-top:6px}
+  .step .s{font-size:clamp(10px,1.1vw,12px); color:var(--muted); margin-top:3px}
+  .arrow{color:var(--accent2); font-size:20px; font-weight:800}
+
+  table{width:100%; border-collapse:collapse; margin-top:8px; font-size:clamp(12px,1.5vw,18px)}
+  th,td{text-align:left; padding:13px 10px; border-bottom:1px solid var(--line)}
+  th{color:var(--accent); font-size:clamp(11px,1.3vw,15px); letter-spacing:.06em}
+  td:first-child{font-size:1.5em; width:52px}
+  td b{color:var(--text)} td span{color:var(--muted)}
+
+  .nav{position:fixed; bottom:18px; right:22px; display:flex; align-items:center; gap:12px; z-index:10}
+  .nav button{background:var(--card); border:1px solid var(--line); color:var(--text);
+    width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:16px}
+  .nav button:hover{background:var(--card2)}
+  .count{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums}
+  .bar{position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .3s; z-index:10}
+  .hint{position:fixed; bottom:22px; left:22px; color:var(--muted); font-size:12px; z-index:10}
+</style>
+
+<div class="bar" id="bar"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide">
+    <div class="kicker">라오스 부트캠프 · 프로젝트 발표</div>
+    <h1>🐶 멍멍 분석기</h1>
+    <p class="lead" style="margin-top:18px">
+      강아지가 짖는 소리를 실시간으로 듣고<br>
+      <b style="color:var(--text)">음높이 · 음량 · 지속시간 · 반복 패턴</b>을 분석하는<br>
+      브라우저 웹 애플리케이션
+    </p>
+    <div style="margin-top:26px">
+      <span class="pill"><b>HTML</b> 파일 1개</span>
+      <span class="pill"><b>서버</b> 불필요</span>
+      <span class="pill"><b>외부 라이브러리</b> 0개</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">시작한 이유</div>
+    <h2>"지금 우리 강아지<br>왜 짖는 걸까?"</h2>
+    <p class="lead">
+      반려인이라면 누구나 하는 질문입니다.<br>
+      반가워서? 경계해서? 심심해서?<br><br>
+      사람 귀로는 다 비슷하게 들리지만,<br>
+      <b style="color:var(--accent)">소리의 물리적 특성은 분명히 다릅니다.</b>
+    </p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">가장 먼저 짚고 갈 것</div>
+    <h2>이건 "번역기"가 아닙니다</h2>
+    <div class="warnbox">
+      <h3>⚠️ 짖는 소리로 강아지의 감정을 정확히 번역하는 것은 과학적으로 불가능합니다.</h3>
+      <p>
+        검증된 데이터셋도, 정답 라벨도 없습니다.<br>
+        "강아지가 이렇게 말했다"고 주장하는 앱은 대부분 근거가 없습니다.
+      </p>
+    </div>
+    <p class="lead" style="margin-top:22px">
+      그래서 이 프로젝트는 <b style="color:var(--good)">측정할 수 있는 것만 측정</b>합니다.<br>
+      해석은 <b style="color:var(--good)">확신도와 함께, 참고용으로</b> 제시합니다.
+    </p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">기술 스택</div>
+    <h2>브라우저 기본 기능만 사용</h2>
+    <div class="grid g3">
+      <div class="box"><div class="ico">🎙️</div><h3>getUserMedia</h3><p>마이크 입력을 실시간 스트림으로 받아옵니다.</p></div>
+      <div class="box"><div class="ico">🔊</div><h3>Web Audio API</h3><p>AnalyserNode로 파형·주파수 데이터를 추출합니다.</p></div>
+      <div class="box"><div class="ico">🎨</div><h3>Canvas</h3><p>실시간 파형을 60fps로 그려줍니다.</p></div>
+    </div>
+    <p class="lead" style="margin-top:24px">
+      설치 없음 · 빌드 없음 · <code>npm install</code> 없음<br>
+      <b style="color:var(--text)">HTML 파일 하나를 브라우저로 열면 끝.</b>
+    </p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">동작 원리</div>
+    <h2>소리 → 숫자 → 해석</h2>
+    <div class="flow">
+      <div class="step"><div class="ico">🎙️</div><div class="t">마이크 입력</div><div class="s">오디오 스트림</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="ico">📊</div><div class="t">특징 추출</div><div class="s">음높이·음량</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="ico">✂️</div><div class="t">짖음 분리</div><div class="s">시작/끝 감지</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="ico">🧠</div><div class="t">규칙 분류</div><div class="s">유형 판정</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="ico">💬</div><div class="t">결과 표시</div><div class="s">+ 확신도</div></div>
+    </div>
+    <p class="lead" style="margin-top:26px">
+      핵심은 <b style="color:var(--accent)">2번(특징 추출)</b>과 <b style="color:var(--accent)">4번(분류)</b>입니다.
+    </p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">특징 추출 ① 음량</div>
+    <h2>RMS — 소리의 세기</h2>
+    <p class="lead">파형 값을 제곱해서 평균 내고, 루트를 씌웁니다. (제곱평균제곱근)</p>
+    <pre><span class="c">// 파형 데이터를 배열로 받아옴</span>
+analyser.<span class="n">getFloatTimeDomainData</span>(timeBuf);
+
+<span class="k">let</span> sum = <span class="n">0</span>;
+<span class="k">for</span> (<span class="k">let</span> i = <span class="n">0</span>; i &lt; timeBuf.length; i++)
+    sum += timeBuf[i] * timeBuf[i];   <span class="c">// 제곱해서 더하기</span>
+
+<span class="k">const</span> rms = Math.<span class="n">sqrt</span>(sum / timeBuf.length);  <span class="c">// 평균 → 루트</span></pre>
+    <p class="lead" style="margin-top:16px">
+      제곱하는 이유: 파형은 <b style="color:var(--text)">+/− 를 오가서</b> 그냥 더하면 0에 가까워집니다.
+    </p>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">특징 추출 ② 음높이</div>
+    <h2>자기상관 — 소리의 주기 찾기</h2>
+    <p class="lead">
+      파형을 <b style="color:var(--text)">조금씩 밀면서 자기 자신과 비교</b>합니다.<br>
+      가장 잘 겹치는 지점이 곧 한 주기의 길이입니다.
+    </p>
+    <pre><span class="c">// off 만큼 밀어서 원본과 얼마나 닮았는지 계산</span>
+<span class="k">for</span> (<span class="k">let</span> off = MINP; off &lt;= MAXP; off++) {
+    <span class="k">let</span> corr = <span class="n">0</span>;
+    <span class="k">for</span> (<span class="k">let</span> i = <span class="n">0</span>; i &lt; size - off; i++)
+        corr += buf[i] * buf[i + off];   <span class="c">// 겹침 정도</span>
+    <span class="c">// corr 이 최대인 off = 한 주기의 길이</span>
+}
+<span class="k">return</span> sampleRate / best;   <span class="c">// 주기 → 주파수(Hz)</span></pre>
+    <div style="margin-top:16px">
+      <span class="pill">탐색 범위 <b>150 ~ 2500 Hz</b></span>
+      <span class="pill">사람 목소리·생활소음 <b>제외</b></span>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">짖음 분리</div>
+    <h2>어디부터 어디까지가<br>"한 번의 짖음"일까?</h2>
+    <p class="lead">음량이 기준선을 넘으면 시작, 조용해지면 끝. 그 사이를 하나의 이벤트로 묶습니다.</p>
+    <pre><span class="k">const</span> SILENCE = <span class="n">0.02</span>;   <span class="c">// 이 아래는 무음으로 간주</span>
+<span class="k">const</span> BARK_ON = <span class="n">0.06</span>;   <span class="c">// 이 위로 올라가면 짖음 시작</span>
+<span class="k">const</span> MIN_DUR = <span class="n">0.08</span>;   <span class="c">// 0.08초 미만은 노이즈로 버림</span></pre>
+    <p class="lead" style="margin-top:18px">
+      끝나는 순간 → <b style="color:var(--accent)">평균 음높이 · 최대 음량 · 지속시간 · 최근 3초 반복 횟수</b><br>
+      이 4개 숫자가 분류기로 넘어갑니다.
+    </p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="kicker">분류 규칙</div>
+    <h2>4개의 숫자 → 5가지 유형</h2>
+    <table>
+      <tr><th></th><th>판정</th><th>근거</th></tr>
+      <tr><td>🌙</td><td><b>외로움 · 불안</b><br><span>하울링 / 낑낑</span></td><td><span>지속시간 &gt; 0.9초</span></td></tr>
+      <tr><td>🎾</td><td><b>놀자! · 관심 요구</b></td><td><span>3초 내 3회 이상 &amp; 각 0.35초 미만</span></td></tr>
+      <tr><td>😃</td><td><b>반가움 · 흥분</b></td><td><span>음높이 &gt; 750 Hz</span></td></tr>
+      <tr><td>⚠️</td><td><b>경고 · 위협</b></td><td><span>음높이 &lt; 350 Hz &amp; 음량 큼</span></td></tr>
+      <tr><td>🐕</td><td><b>일반 경계 짖음</b></td><td><span>그 외 (기본값)</span></td></tr>
+    </table>
+    <p class="lead" style="margin-top:18px; font-size:clamp(13px,1.6vw,18px)">
+      각 결과에 <b style="color:var(--accent)">확신도 55~72%</b>를 함께 표시해 과신을 방지합니다.
+    </p>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="kicker">데모</div>
+    <h2>🎬 실제 화면</h2>
+    <div class="grid g2">
+      <div class="box"><div class="ico">📈</div><h3>실시간 파형</h3><p>조용할 땐 보라색, 짖음이 감지되면 주황색으로 바뀝니다.</p></div>
+      <div class="box"><div class="ico">🔢</div><h3>3개 지표</h3><p>음높이(Hz) · 음량 · 지속시간이 실시간으로 갱신됩니다.</p></div>
+      <div class="box"><div class="ico">💬</div><h3>판정 카드</h3><p>이모지 + 유형 + 설명 + 확신도 막대.</p></div>
+      <div class="box"><div class="ico">🔒</div><h3>완전 로컬</h3><p>소리가 서버로 전송되지 않습니다. 전부 브라우저 안에서 처리.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="kicker">배포</div>
+    <h2>파일 하나를 올리면 끝</h2>
+    <div class="grid g3">
+      <div class="box"><div class="ico">🐙</div><h3>GitHub Pages</h3><p>저장소에 push → Settings에서 Pages 켜기</p></div>
+      <div class="box"><div class="ico">🌐</div><h3>Netlify</h3><p>파일을 창에 드래그 앤 드롭</p></div>
+      <div class="box"><div class="ico">▲</div><h3>Vercel</h3><p>저장소 연결 후 자동 배포</p></div>
+    </div>
+    <div class="warnbox" style="margin-top:22px">
+      <h3>🔑 딱 하나의 조건</h3>
+      <p>마이크는 보안상 <b>https</b> 또는 <b>localhost</b>에서만 작동합니다.<br>
+      파일을 더블클릭해서 여는 <code>file://</code> 방식은 막힐 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="kicker">한계</div>
+    <h2>솔직하게 말하면</h2>
+    <ul class="pts">
+      <li><b>정답 데이터로 검증하지 못했습니다.</b> 라벨링된 강아지 짖음 데이터셋이 없습니다.</li>
+      <li><b>임계값은 경험적입니다.</b> 견종·크기·환경에 따라 조정이 필요합니다.</li>
+      <li><b>사람 목소리도 감지될 수 있습니다.</b> 주파수 범위로만 거르고 있습니다.</li>
+      <li><b>규칙 기반입니다.</b> 머신러닝이 아니라 <code>if / else</code> 입니다.</li>
+    </ul>
+    <p class="lead" style="margin-top:20px">
+      그래서 앱 안에도 이렇게 적어두었습니다 →
+      <b style="color:var(--accent)">"재미로 봐주세요!"</b>
+    </p>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <div class="kicker">다음 단계</div>
+    <h2>여기서 더 간다면</h2>
+    <div class="grid g2">
+      <div class="box"><div class="ico">📂</div><h3>녹음 파일 업로드</h3><p>실시간 마이크 대신 파일을 올려 분석 — 테스트가 훨씬 쉬워집니다.</p></div>
+      <div class="box"><div class="ico">📊</div><h3>짖음 기록 · 통계</h3><p>하루에 몇 번, 어떤 유형이 많았는지 누적 기록.</p></div>
+      <div class="box"><div class="ico">🎚️</div><h3>임계값 조절 UI</h3><p>슬라이더로 우리 집 강아지에 맞게 보정.</p></div>
+      <div class="box"><div class="ico">🤖</div><h3>데이터 수집 → ML</h3><p>직접 라벨을 모아야 진짜 분류기를 만들 수 있습니다.</p></div>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide" style="text-align:center; align-items:center">
+    <div style="font-size:clamp(60px,11vw,120px)">🐶</div>
+    <h1 style="margin-top:10px">감사합니다</h1>
+    <p class="lead" style="margin-top:18px; text-align:center">
+      질문 환영합니다!<br>
+      <span style="font-size:.8em">데모 실행 → <code>dog-bark-analyzer.html</code></span>
+    </p>
+  </section>
+
+</div>
+
+<div class="hint">← → 방향키 · 클릭 · 스페이스로 이동</div>
+<div class="nav">
+  <button id="prev">‹</button>
+  <span class="count"><span id="cur">1</span> / <span id="tot">14</span></span>
+  <button id="next">›</button>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll(".slide")];
+let i=0;
+const bar=document.getElementById("bar"), cur=document.getElementById("cur");
+document.getElementById("tot").textContent=slides.length;
+
+function show(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle("active",k===i));
+  cur.textContent=i+1;
+  bar.style.width=((i+1)/slides.length*100)+"%";
+}
+document.getElementById("next").onclick=e=>{e.stopPropagation(); show(i+1)};
+document.getElementById("prev").onclick=e=>{e.stopPropagation(); show(i-1)};
+document.addEventListener("keydown",e=>{
+  if(["ArrowRight","ArrowDown"," ","PageDown","Enter"].includes(e.key)){e.preventDefault(); show(i+1)}
+  if(["ArrowLeft","ArrowUp","PageUp","Backspace"].includes(e.key)){e.preventDefault(); show(i-1)}
+  if(e.key==="Home") show(0);
+  if(e.key==="End") show(slides.length-1);
+});
+document.getElementById("deck").onclick=e=>{
+  show(e.clientX < window.innerWidth*0.25 ? i-1 : i+1);
+};
+show(0);
+</script>
